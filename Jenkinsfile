@@ -41,15 +41,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh '''
-                        cd server
-                        sonar-scanner \
-                        -Dsonar.projectKey=ai-saas \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('SonarQubeServer') {
+                        sh """
+                            cd server
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=ai-saas \
+                            -Dsonar.sources=.
+                        """
+                    }
                 }
             }
         }
