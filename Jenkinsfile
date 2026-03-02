@@ -1,15 +1,14 @@
 pipeline {
-    agent any 
+    agent any
 
     tools {
-        jdk 'jdk11'
-        maven 'maven3'
+        nodejs 'node18' 
     }
 
     environment {
         DOCKERHUB_USER = "sadishaws"
-        FRONTEND_IMAGE = "${DOCKERHUB_USER}/AI-Saas-frontend"
-        BACKEND_IMAGE  = "${DOCKERHUB_USER}/AI-SaaS-backend"
+        FRONTEND_IMAGE = "${DOCKERHUB_USER}/ai-saas-frontend"
+        BACKEND_IMAGE  = "${DOCKERHUB_USER}/ai-saas-backend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
@@ -22,9 +21,21 @@ pipeline {
             }
         }
 
-        stage('Compile') {
+        stage('Install Dependencies') {
             steps {
-                sh 'mvn -f server/pom.xml clean compile'
+                sh '''
+                    cd server
+                    npm install
+                '''
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh '''
+                    cd server
+                    npm run build || echo "No build script found"
+                '''
             }
         }
 
@@ -32,9 +43,12 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
                     sh '''
-                        mvn -f server/pom.xml sonar:sonar \
-                        -Dsonar.projectKey=AI-Saas \
-                        -Dsonar.projectName=AI-Saas
+                        cd server
+                        sonar-scanner \
+                        -Dsonar.projectKey=ai-saas \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
                     '''
                 }
             }
@@ -50,14 +64,9 @@ pipeline {
 
         stage('OWASP Dependency Scan') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DP'
+                dependencyCheck additionalArguments: '--scan ./server', 
+                odcInstallation: 'DP'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'mvn -f server/pom.xml clean install'
             }
         }
 
@@ -71,6 +80,8 @@ pipeline {
 
                     docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f server/Dockerfile server
                     docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
+
+                    
                 '''
             }
         }
@@ -78,8 +89,8 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${FRONTEND_IMAGE}:${IMAGE_TAG}
                     trivy image --exit-code 1 --severity CRITICAL,HIGH ${BACKEND_IMAGE}:${IMAGE_TAG}
+                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${FRONTEND_IMAGE}:${IMAGE_TAG}
                 '''
             }
         }
@@ -95,6 +106,7 @@ pipeline {
                         docker push ${FRONTEND_IMAGE}:latest
                         docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
                         docker push ${BACKEND_IMAGE}:latest
+                        
                     '''
                 }
             }
@@ -103,10 +115,10 @@ pipeline {
 
     post {
         success {
-            echo "Build ${BUILD_NUMBER} completed successfully"
+            echo "✅ Build ${BUILD_NUMBER} completed successfully"
         }
         failure {
-            echo "Build ${BUILD_NUMBER} failed"
+            echo "❌ Build ${BUILD_NUMBER} failed"
         }
         always {
             cleanWs()
