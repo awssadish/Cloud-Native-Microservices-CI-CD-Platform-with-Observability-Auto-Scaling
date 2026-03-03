@@ -10,8 +10,6 @@ pipeline {
         FRONTEND_IMAGE = "${DOCKERHUB_USER}/ai-saas-frontend"
         BACKEND_IMAGE  = "${DOCKERHUB_USER}/ai-saas-backend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
-
-        NVD_API_KEY = credentials('nvd-api-key')
     }
 
     stages {
@@ -67,13 +65,15 @@ pipeline {
 
         stage('OWASP Dependency Check') {
             steps {
-                dependencyCheck additionalArguments: """
-                    --scan ./server
-                    --format XML
-                    --out .
-                    --nvdApiKey ${NVD_API_KEY}
-                """,
-                odcInstallation: 'DP'
+                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                    dependencyCheck additionalArguments: """
+                        --scan ./server
+                        --format XML
+                        --out .
+                        --nvdApiKey $NVD_KEY
+                    """,
+                    odcInstallation: 'DP'
+                }
 
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
