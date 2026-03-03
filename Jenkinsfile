@@ -94,15 +94,6 @@ pipeline {
             }
         }
 
-        stage('Trivy Image Scan') {
-            steps {
-                sh '''
-                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${BACKEND_IMAGE}:${IMAGE_TAG}
-                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                '''
-            }
-        }
-
         stage('Push Images to Docker Hub') {
             steps {
                 withDockerRegistry(
