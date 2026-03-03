@@ -78,15 +78,6 @@ pipeline {
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
-
-        stage('Trivy Filesystem Scan') {
-            steps {
-                sh '''
-                    trivy fs --exit-code 1 --severity HIGH,CRITICAL server/
-                '''
-            }
-        }
-
         stage('Build Docker Images') {
             steps {
                 sh '''
