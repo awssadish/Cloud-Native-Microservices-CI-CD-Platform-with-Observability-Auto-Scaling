@@ -10,6 +10,8 @@ pipeline {
         FRONTEND_IMAGE = "${DOCKERHUB_USER}/ai-saas-frontend"
         BACKEND_IMAGE  = "${DOCKERHUB_USER}/ai-saas-backend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
+
+        NVD_API_KEY = credentials('nvd-api-key')
     }
 
     stages {
@@ -63,11 +65,25 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Scan') {
+        stage('OWASP Dependency Check') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./server', 
+                dependencyCheck additionalArguments: """
+                    --scan ./server
+                    --format XML
+                    --out .
+                    --nvdApiKey ${NVD_API_KEY}
+                """,
                 odcInstallation: 'DP'
+
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('Trivy Filesystem Scan') {
+            steps {
+                sh '''
+                    trivy fs --exit-code 1 --severity HIGH,CRITICAL server/
+                '''
             }
         }
 
