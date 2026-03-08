@@ -110,6 +110,19 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f k8s/
+
+                    kubectl set image deployment/ai-saas-frontend \
+                    frontend=${FRONTEND_IMAGE}:${IMAGE_TAG}
+
+                    kubectl set image deployment/ai-saas-backend \
+                    backend=${BACKEND_IMAGE}:${IMAGE_TAG}
+                '''
+            }
+        }
     }
 
     post {
