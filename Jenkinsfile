@@ -45,10 +45,11 @@ pipeline {
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv('SonarQubeServer') {
                         sh """
-                            cd server
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=ai-saas \
-                            -Dsonar.sources=.
+                        cd server
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=ai-saas \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://localhost:9000
                         """
                     }
                 }
