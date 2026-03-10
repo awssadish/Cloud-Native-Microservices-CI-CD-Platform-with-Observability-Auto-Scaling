@@ -49,7 +49,7 @@ pipeline {
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=ai-saas \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000
+                        -Dsonar.host.url=http://51.21.231.165:9000
                         """
                     }
                 }
