@@ -5,7 +5,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: ai-saas.local
+  - host: ai-saas.sadish.com
     http:
       paths:
       - path: /
