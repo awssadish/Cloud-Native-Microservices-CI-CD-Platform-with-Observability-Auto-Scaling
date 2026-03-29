@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node18' 
+        nodejs 'node18'
     }
 
     environment {
@@ -21,21 +21,28 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    cd server
-                    npm install
-                '''
-            }
-        }
+        stage('Install & Build (Parallel)') {
+            parallel {
 
-        stage('Build Application') {
-            steps {
-                sh '''
-                    cd server
-                    npm run build || echo "No build script found"
-                '''
+                stage('Backend Build') {
+                    steps {
+                        sh '''
+                            cd server
+                            npm install
+                            npm run build || echo "No build script found"
+                        '''
+                    }
+                }
+
+                stage('Frontend Build') {
+                    steps {
+                        sh '''
+                            cd client
+                            npm install
+                            npm run build || echo "No build script found"
+                        '''
+                    }
+                }
             }
         }
 
@@ -45,10 +52,9 @@ pipeline {
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv('SonarQubeServer') {
                         sh """
-                            cd server
                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=ai-saas \
-                            -Dsonar.sources=.
+                            -Dsonar.sources=server,client
                         """
                     }
                 }
@@ -57,8 +63,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-               timeout(time: 2, unit: 'MINUTES') {
-                   waitForQualityGate abortPipeline: true
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -67,7 +73,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
                     dependencyCheck additionalArguments: """
-                        --scan ./server
+                        --scan .
                         --format XML
                         --out .
                         --nvdApiKey $NVD_KEY
@@ -78,6 +84,7 @@ pipeline {
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
+
         stage('Build Docker Images') {
             steps {
                 sh '''
@@ -88,8 +95,15 @@ pipeline {
 
                     docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f server/Dockerfile server
                     docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
+                '''
+            }
+        }
 
-                    
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    trivy image ${FRONTEND_IMAGE}:${IMAGE_TAG} || true
+                    trivy image ${BACKEND_IMAGE}:${IMAGE_TAG} || true
                 '''
             }
         }
@@ -105,9 +119,16 @@ pipeline {
                         docker push ${FRONTEND_IMAGE}:latest
                         docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
                         docker push ${BACKEND_IMAGE}:latest
-                        
                     '''
                 }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f k8s/
+                '''
             }
         }
     }
