@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: aisaas-app
+  namespace: game-2048
   name: ai-saas-frontend
   labels:
     app: frontend
