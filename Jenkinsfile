@@ -110,11 +110,31 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Update to EKS') {
             steps {
-                sh '''
-                    kubectl apply -f k8s/
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                        # Connect to EKS cluster
+                        aws eks --region eu-north-1 update-kubeconfig --name project-one-cluster
+
+                        # Update backend deployment image
+                        kubectl set image deployment/ai-saas-backend \
+                        backend=${BACKEND_IMAGE}:${IMAGE_TAG} \
+                        -n aisaas
+
+                        # Update frontend deployment image
+                        kubectl set image deployment/ai-saas-frontend \
+                        frontend=${FRONTEND_IMAGE}:${IMAGE_TAG} \
+                        -n aisaas
+
+                        # Wait for rollout (zero downtime deployment)
+                        kubectl rollout status deployment/ai-saas-backend -n aisaas
+                        kubectl rollout status deployment/ai-saas-frontend -n aisaas
+                    '''
+                }
             }
         }
     }
