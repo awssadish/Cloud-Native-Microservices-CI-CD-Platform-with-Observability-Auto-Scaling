@@ -83,7 +83,8 @@ pipeline {
                 sh '''
                     trivy fs . \
                     --severity HIGH,CRITICAL \
-                    --format html \
+                    --format template \
+                    --template "@/usr/local/share/trivy/templates/html.tpl" \
                     --output trivy-report.html \
                     --no-progress
                 '''
