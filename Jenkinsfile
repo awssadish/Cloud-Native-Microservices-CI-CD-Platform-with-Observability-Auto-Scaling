@@ -78,6 +78,27 @@ pipeline {
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
+        stage('Trivy Filesystem Scan') {
+            steps {
+                sh '''
+                    trivy fs . \
+                    --severity HIGH,CRITICAL \
+                    --format html \
+                    --output trivy-report.html \
+                    --no-progress
+                '''
+            }
+        }
+        stage('Trivy Secret Scan') {
+            steps {
+                sh '''
+                    trivy fs . \
+                    --scanners secret \
+                    --severity HIGH,CRITICAL \
+                    --no-progress
+                '''
+            }
+        }
         stage('Build Docker Images') {
             steps {
                 sh '''
@@ -110,6 +131,21 @@ pipeline {
                 }
             }
         }
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    trivy image ${FRONTEND_IMAGE}:${IMAGE_TAG} \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    --no-progress
+
+                    trivy image ${BACKEND_IMAGE}:${IMAGE_TAG} \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    --no-progress
+                '''
+            }
+        }
         stage('Deploy Update to EKS') {
             steps {
                 withCredentials([[
@@ -140,14 +176,19 @@ pipeline {
     }
 
     post {
-        success {
-            echo "✅ Build ${BUILD_NUMBER} completed successfully"
-        }
-        failure {
-            echo "❌ Build ${BUILD_NUMBER} failed"
-        }
-        always {
-            cleanWs()
-        }
+    success {
+        echo "✅ Build ${BUILD_NUMBER} completed successfully"
     }
+    failure {
+        echo "❌ Build ${BUILD_NUMBER} failed"
+    }
+    always {
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'trivy-report.html',
+            reportName: 'Trivy Security Report'
+        ])
+        cleanWs()
+    }
+}
 }
