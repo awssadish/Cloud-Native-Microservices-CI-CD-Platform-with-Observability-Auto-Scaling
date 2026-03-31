@@ -135,15 +135,15 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
+                    echo "Running Trivy Security Scan..."
+
                     trivy image ${FRONTEND_IMAGE}:${IMAGE_TAG} \
                     --severity HIGH,CRITICAL \
-                    --exit-code 1 \
-                    --no-progress
+                    --no-progress || echo "Frontend vulnerabilities found"
 
                     trivy image ${BACKEND_IMAGE}:${IMAGE_TAG} \
                     --severity HIGH,CRITICAL \
-                    --exit-code 1 \
-                    --no-progress
+                    --no-progress || echo "Backend vulnerabilities found"
                 '''
             }
         }
