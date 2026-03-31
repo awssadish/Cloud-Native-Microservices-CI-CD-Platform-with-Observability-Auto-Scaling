@@ -183,12 +183,15 @@ pipeline {
         echo "❌ Build ${BUILD_NUMBER} failed"
     }
     always {
-        publishHTML([
+        publishHTML(target: [
             reportDir: '.',
             reportFiles: 'trivy-report.html',
-            reportName: 'Trivy Security Report'
+            reportName: 'Trivy Security Report',
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: true
         ])
         cleanWs()
     }
-}
+    }
 }
