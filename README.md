@@ -94,3 +94,6 @@ LEARNING OUTCOMES
     - Hands-on experience with cloud-native architecture
     - Deep understanding of Kubernetes and CI/CD
     - Implemented real-world DevOps practices
+
+<img width="3161" height="1700" alt="Screenshot 2026-03-31 213005" src="https://github.com/user-attachments/assets/a6e5fa07-e808-4d6e-b162-fff84d9c139c" />
+
