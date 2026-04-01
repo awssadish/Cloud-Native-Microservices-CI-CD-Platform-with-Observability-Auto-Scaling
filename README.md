@@ -95,5 +95,26 @@ LEARNING OUTCOMES
     - Deep understanding of Kubernetes and CI/CD
     - Implemented real-world DevOps practices
 
+🔹EC2 instance:
 <img width="3161" height="1700" alt="Screenshot 2026-03-31 213005" src="https://github.com/user-attachments/assets/a6e5fa07-e808-4d6e-b162-fff84d9c139c" />
+
+🔹EKS cluster:
+<img width="3192" height="1119" alt="Screenshot 2026-03-31 213135" src="https://github.com/user-attachments/assets/9381768e-ef72-40fc-84d1-5483766e7f4c" />
+
+🔹Load Balancer:
+<img width="3147" height="1550" alt="Screenshot 2026-03-31 213230" src="https://github.com/user-attachments/assets/97ca5dcd-1469-45ea-9f15-3c133a9c7ea8" />
+
+🔹Security trivy report:
+<img width="3177" height="1734" alt="Screenshot 2026-03-31 213509" src="https://github.com/user-attachments/assets/f4f90826-cc83-40d4-b900-8e109cd020b5" />
+
+🔹Sonarqube:
+<img width="2853" height="1727" alt="Screenshot 2026-03-31 214407" src="https://github.com/user-attachments/assets/fe71c555-fcba-4717-a4dc-1aae393ce08b" />
+
+🔹Docker hub:
+<img width="3134" height="1696" alt="Screenshot 2026-03-31 214743" src="https://github.com/user-attachments/assets/5c6a1c0e-73ee-49d0-bf04-b983aff1f30b" />
+
+
+
+
+
 
